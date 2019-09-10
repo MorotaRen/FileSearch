@@ -85,6 +85,8 @@ namespace FinalProject_18300124 {
             m_DisplayTable = new DataTable();
             //更新前テーブル
             m_FirstTable = new DataTable();
+            //開始前の初期化
+            Initialize();
 
             //チェックボックスの生成
             m_CheckBox = new DataColumn("自作", typeof(bool));
@@ -269,9 +271,13 @@ namespace FinalProject_18300124 {
         /// <param name="columsNum">横何番目に記入するか</param>
         void FileSearch(string folderpath,int columsNum)
         {
+            //ファイルのパスの取得
             var Files = GetFiles(folderpath);
+            //フォルダパスの取得
             var Folders = GetFolders(folderpath);
+            //取得したのパスの連携
             var SearchTarget = Files.Concat(Folders).ToArray();
+
             for (int j = 0; j < SearchTarget.Count(); j++)
             {
                 if (Directory.Exists(SearchTarget[j]))
@@ -281,28 +287,36 @@ namespace FinalProject_18300124 {
                     if (m_FileNum > m_Limit) {
                         break;
                     }
+                    //タイトルの追加
                     m_FirstTable.Columns.Add("第" + m_FileNum + "階層ファイル");
                     m_FirstTable.Columns.Add("第" + m_FileNum + "拡張子");
-                    var FolderPath = m_FirstTable.NewRow();
+                    //ファイル名記入用の作成
                     var Filerow = m_FirstTable.NewRow();
+                    //ファイルネームを書きこみ
                     Filerow[columsNum] = System.IO.Path.GetFileNameWithoutExtension(SearchTarget[j]);
+                    //ファイル名用に作成したものを実際に追加
                     m_FirstTable.Rows.Add(Filerow);
+                    //拡張子のところに「→」を追加
                     Filerow[columsNum + 1] = "→";
+                    //拡張子を含めた数ずらす
                     m_FileColsNum += 2;
+                    //ファイルサーチを続ける
                     FileSearch(SearchTarget[j], m_FileColsNum);
-                }
-                else {
-                    var FolderPath = m_FirstTable.NewRow();
+                } else {
+                    //ファイル名記入用
                     var Filerow = m_FirstTable.NewRow();
+                    //拡張子名の取得
                     string ExtensionName = System.IO.Path.GetExtension(Files[j]);
-
+                    //拡張子がソート用になかったら追加する
                     if (!ExtensionData.Contains(ExtensionName))
                     {
                         ExtensionData.Add(ExtensionName);
                     }
-
+                    //拡張子のみの取得
                     Filerow[columsNum] = System.IO.Path.GetFileNameWithoutExtension(Files[j]);
+                    //拡張子名を入れる
                     Filerow[columsNum+1] = ExtensionName;
+                    //実際の追加
                     m_FirstTable.Rows.Add(Filerow);
                 }
             }
@@ -315,20 +329,24 @@ namespace FinalProject_18300124 {
         ///<param name="extension">ソートする拡張子名   </param>
         void SelectSort(List<String> extension)
         {
-            DataTable dRows = m_FirstTable.Clone();
+            //初回テーブルのクローンの追加
+            DataTable CloneFirstTabe = m_FirstTable.Clone();
+            //ソートする拡張子が選ばれてなかったら初回テーブル表示
             if (extension == null) {
                 this.dataGrid.DataContext = m_FirstTable;
             }else{
+                //ソートする拡張子を検索してクローンテーブルを編集
                 foreach (var fex in extension) {
                     string FileExtension = "拡張子 = " + "'" + fex + "'";
                     DataRow[] drs = m_FirstTable.Select(FileExtension);
                     foreach (var dr in drs) {
-                        var dAddRow = dRows.NewRow();
+                        var dAddRow = CloneFirstTabe.NewRow();
                         dAddRow.ItemArray = dr.ItemArray;
-                        dRows.Rows.Add(dAddRow);
+                        CloneFirstTabe.Rows.Add(dAddRow);
                     }
                 }
-                SetDisplayTable(dRows);
+                //編集したクローンテーブルを表示
+                SetDisplayTable(CloneFirstTabe);
             }
         }
 
@@ -393,9 +411,9 @@ namespace FinalProject_18300124 {
             }
         }
 
-        /// <summary>
-        ///表示テーブルのセット
-        /// </summary>
+        /// -------------------------------------------<summary>
+        /// 表示テーブルのセット
+        /// </summary>------------------------------------------
         /// <param name="setTable">表示するテーブル</param>
         private void SetDisplayTable(DataTable setTable)
         {
